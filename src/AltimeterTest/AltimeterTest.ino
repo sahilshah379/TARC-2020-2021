@@ -1,19 +1,22 @@
-#include "src/Altimeter/Altimeter.h"
+#include "Altimeter.h"
 
-Altimeter altimeter(1019);
+Altimeter altimeter(1015);
 
 void setup() {
   Serial.begin(9600);
   while (!Serial);
   
   if (!altimeter.init()) {
-    Serial.println("Failed initializing the altimeter");
+    Serial.println("Failed to initialize the altimeter");
     while(1);
   }
 }
 
 void loop() {
-  double altitude = altimeter.altitude();
-  Serial.println(altitude);
-  delay(10);
+  if (!altimeter.update()) {
+    Serial.println("Failed to read altimeter data");
+    return;
+  }
+  Serial.println(altimeter.altitude());
+  delay(20);
 }

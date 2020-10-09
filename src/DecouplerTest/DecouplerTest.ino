@@ -1,4 +1,4 @@
-#include "src/Decoupler/Decoupler.h"
+#include "Decoupler.h"
 
 const int pin = 10;
 
@@ -14,11 +14,14 @@ Decoupler decoupler(refresh_interval, pulse_lower, pulse_upper, 0, max_degrees);
 
 void setup() {
   decoupler.link(pin, openPos, closePos);
+  Serial.println("SetupCheckpoint");
 }
 
 void loop() {
   decoupler.open();
+  Serial.println("OpenCheckpoint");
   delay(1500);
   decoupler.close();
+  Serial.println("CloseCheckpoint");
   delay(1500);
 }
