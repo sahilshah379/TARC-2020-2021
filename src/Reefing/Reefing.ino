@@ -1,4 +1,5 @@
 #include <math.h>
+#include <math.h>
 #include "Arduino.h"
 #include "Altimeter.h"
 #include "Decoupler.h"
@@ -39,12 +40,10 @@ void loop() {
   
     double altitude = altimeter.altitude();
     double velocity = altimeter.velocity();
-    double delta_time = sqrt(mass/(gravity*k))*(acosh(exp((altitude*k)/mass)-(0.5*log(1-((velocity*velocity*k)/(mass*gravity)))))-(atanh(velocity*sqrt(k/(mass*gravity)))));
-  
-    if(altimeter.velocity() < -10.0){
-      if(current_time*1000+delta_time <= flight_time) {
+    double vt=sqrt((mass*gravity)/k);
+    double ymax = (vt*vt/(2*gravity))*log((velocity^2+vt^2)/vt^2);
+    if(altitude+ymax>=800) {
         decoupler.close();
-      }
     }
   }
 }
