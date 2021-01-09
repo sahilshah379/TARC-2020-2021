@@ -8,8 +8,8 @@ const int pulse_lower = 750;
 const int pulse_upper = 2250;
 const int max_degrees = 145;
 
-const int openPos = 60;
-const int closePos = 0;
+const int openPos = 135;
+const int closePos = 90;
 
 
 Decoupler decoupler(0, max_degrees);
