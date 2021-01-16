@@ -8,8 +8,8 @@ const int pulse_lower = 750;
 const int pulse_upper = 2250;
 const int max_degrees = 145;
 
-const int openPos = 135;
-const int closePos = 90;
+const int openPos = 105;
+const int closePos = 60;
 
 
 Decoupler decoupler(0, max_degrees);
@@ -26,7 +26,7 @@ void loop() {
   for (pos = 180; pos >= 0; pos -= 1) {
     myservo.write(pos);
   }*/
-  decoupler.open();
+  decoupler.close();
   delay(1000);
   decoupler.close();
   delay(1000);
