@@ -15,6 +15,7 @@ const int max_degrees = 145;
 unsigned long current_time;
 unsigned long start_time;
 bool setTimer = false;
+const double openTime = 1;
 
 Altimeter altimeter(sea_level_pressure);
 Decoupler decoupler(0, max_degrees);
@@ -39,12 +40,9 @@ void loop() {
   
     double altitude = altimeter.altitude();
     double velocity = altimeter.velocity();
-    double delta_time = sqrt(mass/(gravity*k))*(acosh(exp((altitude*k)/mass)-(0.5*log(1-((velocity*velocity*k)/(mass*gravity)))))-(atanh(velocity*sqrt(k/(mass*gravity)))));
   
-    if(altimeter.velocity() < -10.0){
-      if(current_time*1000+delta_time <= flight_time) {
-        decoupler.close();
-      }
+    if (current_time/1000 >= flight_time - openTime - (velocity*openTime + 0.5*gravity*pow(openTime,2) + altitude)/sqrt(mass*gravity/k)) {
+      decoupler.close();
     }
   }
 }
