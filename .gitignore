@@ -2,5 +2,9 @@ __pycache__/
 *.pyc
 
 .vscode/
-
+.idea/
 .DS_Store
+
+.pio/
+CMakeListsPrivate.txt
+cmake-build-*/ 
