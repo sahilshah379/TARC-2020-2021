@@ -24,30 +24,30 @@ bool Altimeter::update() {
 
     _rAltitude.push_back(_altitude);
     _rTime.push_back(millis());
+
+    _altitudeAvg = 0;
+    for (int i = 0; i < SAMPLE_SIZE; i++) {
+        _altitudeAvg += _rAltitude[i];
+    }
+    _altitudeAvg /= SAMPLE_SIZE;
+
     return true;
 }
 
-double Altimeter::temperature() {
+double Altimeter::temperature() const {
     return _temperature;
 }
 
-double Altimeter::pressure() {
+double Altimeter::pressure() const {
     return _pressure;
 }
 
-double Altimeter::altitude() {
-    return _altitude;
+double Altimeter::altitude() const {
+    return _altitudeAvg;
 }
 
 double Altimeter::velocity() {
-    double altitudeAvg = 0, timeAvg = 0;
-    for (int i = 0; i < 5; i++) {
-        altitudeAvg += _rAltitude[i];
-        timeAvg += _rAltitude[i];
-    }
-    altitudeAvg /= 5;
-    timeAvg /= 5;
-    return 1000 * altitudeAvg / timeAvg;
+    return 1000.0 * (_rAltitude[SAMPLE_SIZE-1]-_rAltitude[0]) / (_rTime[SAMPLE_SIZE-1]-_rTime[0]);
 }
 
 void Altimeter::zero(double p0) {

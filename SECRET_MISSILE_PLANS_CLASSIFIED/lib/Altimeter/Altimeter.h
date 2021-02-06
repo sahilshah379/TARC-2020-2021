@@ -12,25 +12,25 @@ private:
     double _temperature;
     double _pressure;
     double _altitude;
-    CircularBuffer<double> _rAltitude{5};
-    CircularBuffer<unsigned long> _rTime{5};
-
-    void updateReadings();
+    double _altitudeAvg;
+    static constexpr int SAMPLE_SIZE = 5;
+    CircularBuffer<double> _rAltitude{SAMPLE_SIZE};
+    CircularBuffer<unsigned long> _rTime{SAMPLE_SIZE};
 
 public:
     Altimeter() = delete;
 
-    Altimeter(double p0);
+    explicit Altimeter(double p0);
 
     bool init();
 
     bool update();
 
-    double temperature();
+    double temperature() const;
 
-    double pressure();
+    double pressure() const;
 
-    double altitude();
+    double altitude() const;
 
     double velocity();
 
