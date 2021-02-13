@@ -3,14 +3,9 @@
 Altimeter::Altimeter(double p0) : _p0(p0) {}
 
 bool Altimeter::init() {
-    if (_bmp.begin()) {
-        _bmp.setTemperatureOversampling(BMP3_OVERSAMPLING_2X);
-        _bmp.setPressureOversampling(BMP3_OVERSAMPLING_8X);
-        _bmp.setIIRFilterCoeff(BMP3_IIR_FILTER_DISABLE);
-        _bmp.setOutputDataRate(BMP3_ODR_100_HZ);
-        return true;
-    }
-    return false;
+    return _bmp.begin() && _bmp.setTemperatureOversampling(BMP3_OVERSAMPLING_8X) &&
+           _bmp.setPressureOversampling(BMP3_OVERSAMPLING_8X) && _bmp.setIIRFilterCoeff(BMP3_IIR_FILTER_COEFF_3) &&
+           _bmp.setOutputDataRate(BMP3_ODR_100_HZ);
 }
 
 bool Altimeter::update() {
@@ -47,7 +42,7 @@ double Altimeter::altitude() const {
 }
 
 double Altimeter::velocity() {
-    return 1000.0 * (_rAltitude[SAMPLE_SIZE-1]-_rAltitude[0]) / (_rTime[SAMPLE_SIZE-1]-_rTime[0]);
+    return 1000.0 * (_rAltitude[SAMPLE_SIZE - 1] - _rAltitude[0]) / (_rTime[SAMPLE_SIZE - 1] - _rTime[0]);
 }
 
 void Altimeter::zero(double p0) {
