@@ -1,51 +1,38 @@
 #ifndef SECRET_MISSILE_PLANS_CLASSIFIED_CIRCULARBUFFER_H
 #define SECRET_MISSILE_PLANS_CLASSIFIED_CIRCULARBUFFER_H
 
-#include <string.h>
+#include <cstring>
 #include <Arduino.h>
 
-template<class T>
+template<class T, int size>
 class CircularBuffer {
 private:
-    T *_buf = nullptr;
+    T _buf[size];
     int _head = 0;
 
 public:
-    const int size;
+    CircularBuffer() = default;
 
-    CircularBuffer() = delete;
-
-    CircularBuffer(int length) : size(length) {
-        _buf = static_cast<T *>(malloc((size + 1) * sizeof(T)));
-    }
-
-    CircularBuffer(const CircularBuffer<T> &buf) : size(buf.size) {
-        _buf = static_cast<T *>(malloc((buf.size + 1) * sizeof(T)));
-        memcpy(_buf, buf._buf, sizeof(T) * (buf.size + 1));
+    CircularBuffer(const CircularBuffer<T, size> &buf) {
+        for (int i = 0; i < size; i++) {
+            _buf[i] = buf._buf[i];
+        }
         _head = buf._head;
     }
 
-    CircularBuffer &operator=(const CircularBuffer<T> &buf) {
+    CircularBuffer &operator=(const CircularBuffer<T, size> &buf) {
         if (this != &buf) {
-            if (_buf != nullptr) {
-                free(_buf);
+            for (int i = 0; i < size; i++) {
+                _buf[i] = buf._buf[i];
             }
-            _buf = static_cast<T *>(malloc((buf.size + 1) * sizeof(T)));
-            memcpy(_buf, buf._buf, sizeof(T) * (buf.size + 1));
-            size = buf.size;
             _head = buf._head;
         }
         return *this;
     }
 
-    ~CircularBuffer() {
-        free(_buf);
-    }
-
     T &operator[](int idx) {
         if (idx >= size) {
-            Serial.print("Circular Buffer out of bounds!");
-            exit(0);
+            for (;;);
         }
         return _buf[(_head + idx) % size];
     }

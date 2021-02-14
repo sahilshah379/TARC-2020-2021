@@ -9,10 +9,10 @@ private:
     const int _min;
     const int _max;
 
-    int _open;
-    int _close;
+    int _open{};
+    int _close{};
 
-    Servo _servo;
+    Servo _servo{};
 
 public:
     Decoupler() = delete;
