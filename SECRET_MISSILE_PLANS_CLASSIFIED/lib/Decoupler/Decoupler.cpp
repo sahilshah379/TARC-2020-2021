@@ -11,13 +11,13 @@ void Decoupler::link(int pin, int open, int close) {
 }
 
 void Decoupler::open() {
-    for (int pos = _min; pos <= _open; pos++) {
+    for (int pos = _min; pos <= _open; ++pos) {
         _servo.write(pos);
     }
 }
 
 void Decoupler::close() {
-    for (int pos = _max; pos >= _close; pos--) {
+    for (int pos = _max; pos >= _close; --pos) {
         _servo.write(pos);
     }
 }

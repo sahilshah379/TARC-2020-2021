@@ -14,7 +14,7 @@ public:
     CircularBuffer() = default;
 
     CircularBuffer(const CircularBuffer<T, size> &buf) {
-        for (int i = 0; i < size; i++) {
+        for (int i = 0; i < size; ++i) {
             _buf[i] = buf._buf[i];
         }
         _head = buf._head;
@@ -22,7 +22,7 @@ public:
 
     CircularBuffer &operator=(const CircularBuffer<T, size> &buf) {
         if (this != &buf) {
-            for (int i = 0; i < size; i++) {
+            for (int i = 0; i < size; ++i) {
                 _buf[i] = buf._buf[i];
             }
             _head = buf._head;
@@ -32,6 +32,8 @@ public:
 
     T &operator[](int idx) {
         if (idx >= size) {
+            pinMode(LED_BUILTIN, OUTPUT);
+            digitalWrite(LED_BUILTIN, HIGH);
             for (;;);
         }
         return _buf[(_head + idx) % size];

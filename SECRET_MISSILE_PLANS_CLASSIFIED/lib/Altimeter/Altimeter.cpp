@@ -15,7 +15,7 @@ bool Altimeter::update() {
     _rTime.push_back(millis());
 
     double altitudeAvg = 0;
-    for (int i = 0; i < SAMPLE_SIZE; i++) {
+    for (int i = 0; i < SAMPLE_SIZE; ++i) {
         altitudeAvg += _rAltitude[i];
     }
     altitudeAvg /= SAMPLE_SIZE;
