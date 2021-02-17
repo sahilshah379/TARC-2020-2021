@@ -38,6 +38,7 @@ static File logFile;
 #endif
 
 void setup() {
+    // configure led & turn it off
     pinMode(LED_BUILTIN, OUTPUT);
     digitalWrite(LED_BUILTIN, LOW);
 
@@ -48,6 +49,7 @@ void setup() {
 
 #ifdef USE_SD
     if (!SD.begin(4)) {
+        // SD card could not be loaded
         digitalWrite(LED_BUILTIN, HIGH);
         for (;;);
     }
@@ -90,77 +92,96 @@ void loop() {
 #endif
 
     elapsed_time = millis() - start_time;
+
     if (fallback || !altimeter.update()) {
         // something has gone horribly wrong, switching to time-based fallback
         fallback = true;
         digitalWrite(LED_BUILTIN, HIGH);
-        // when we're a bit after the apogee
-        // TODO: actually confirm fallback time
-        if (elapsed_time >= FALLBACK_RELEASE_TIME) {
-            decoupler.close();
-        }
-    }
-
-#ifdef USE_SERIAL
-    Serial.println(altimeter.velocity());
-#endif
-
-#ifdef USE_SD
-    if (logFile) {
-        if (fallback) {
-            logFile.println(String(elapsed_time) + ", on fallback");
-        } else {
-            logFile.println(
-                    String(elapsed_time) + ", " + String(altimeter.altitude()) + ", " + String(altimeter.velocity()));
-        }
-    }
-#endif
 
 #ifdef LAUNCH
-    avgVel.push_back(altimeter.velocity());
-    if (elapsed_time > 2000) {
-        double avg2sec = 0;
-        for (int i = 0; i < (2000 / UPDATE_TIME); ++i) {
-            avg2sec += avgVel[i];
-        }
-        avg2sec /= (2000.0 / UPDATE_TIME);
-
-        if (avg2sec < ZERO_VEL_THRESH) {
-            apogee = true;
+        // when we're a bit after the apogee
+        if (elapsed_time >= FALLBACK_RELEASE_TIME) {
+            decoupler.close();
 #ifdef USE_SD
             if (logFile) {
-                logFile.println(String(elapsed_time) + ", " + "Apogee Reached");
+                logFile.println(String(elapsed_time) + ", " + "Decoupled");
             }
 #endif
         }
-    }
+#endif
 
-    if (apogee && elapsed_time <= (unsigned long) (1000 * (FLIGHT_TIME - OPEN_TIME -
-                                                           (altimeter.altitude() - altimeter.velocity() * OPEN_TIME -
-                                                            0.5 * GRAVITY * pow(OPEN_TIME, 2)) /
-                                                           sqrt(MASS * GRAVITY / K)))) {
-        decoupler.close();
 #ifdef USE_SD
         if (logFile) {
-            logFile.println(String(elapsed_time) + ", " + "Decoupled");
+            logFile.println(String(elapsed_time) + ", on fallback");
+
+            // stop logging after 2 minutes
+            if (elapsed_time > 120000) {
+                logFile.close();
+            }
         }
 #endif
-    }
+    } else {
+
+#ifdef USE_SERIAL
+        Serial.println(altimeter.velocity());
 #endif
 
 #ifdef USE_SD
-    // (time, altitude, velocity)
-    if (elapsed_time > 5000) {
-        double avg5sec = 0;
-        for (int i = 0; i < (5000 / UPDATE_TIME); ++i) {
-            avg5sec += avgVel[i];
+        if (logFile) {
+            logFile.println(
+                    String(elapsed_time) + ", " + String(altimeter.altitude()) + ", " + String(altimeter.velocity()));
         }
-        avg5sec /= (5000.0 / UPDATE_TIME);
-        if ((avg5sec < ZERO_VEL_THRESH || (fallback && 120000 < elapsed_time)) && logFile) {
-            logFile.close();
-        }
-    }
 #endif
+
+        avgVel.push_back(altimeter.velocity());
+
+#ifdef LAUNCH
+        if (elapsed_time > 5000) {
+            double avg2sec = 0;
+            // add from 5 sec to 3 sec
+            for (int i = 5000 / UPDATE_TIME - 1; i > (3000 / UPDATE_TIME); --i) {
+                avg2sec += avgVel[i];
+            }
+            avg2sec /= (2000.0 / UPDATE_TIME);
+
+            if (avg2sec < ZERO_VEL_THRESH) {
+                apogee = true;
+#ifdef USE_SD
+                if (logFile) {
+                    logFile.println(String(elapsed_time) + ", " + "Apogee Reached");
+                }
+#endif
+            }
+        }
+
+        if (apogee && elapsed_time <= (unsigned long) (1000 * (FLIGHT_TIME - OPEN_TIME -
+                                                               (altimeter.altitude() -
+                                                                altimeter.velocity() * OPEN_TIME -
+                                                                0.5 * GRAVITY * pow(OPEN_TIME, 2)) /
+                                                               sqrt(MASS * GRAVITY / K)))) {
+            decoupler.close();
+#ifdef USE_SD
+            if (logFile) {
+                logFile.println(String(elapsed_time) + ", " + "Decoupled");
+            }
+#endif
+        }
+#endif
+
+#ifdef USE_SD
+        // (time, altitude, velocity)
+        if (logFile && elapsed_time > 5000) {
+            double avg5sec = 0;
+            for (int i = 0; i < (5000 / UPDATE_TIME); ++i) {
+                avg5sec += avgVel[i];
+            }
+            avg5sec /= (5000.0 / UPDATE_TIME);
+            if (avg5sec < ZERO_VEL_THRESH) {
+                logFile.close();
+            }
+        }
+#endif
+    }
 
     delay(UPDATE_TIME);
 }
