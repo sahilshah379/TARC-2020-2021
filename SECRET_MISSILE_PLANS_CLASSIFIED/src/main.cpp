@@ -35,6 +35,7 @@ static Decoupler decoupler(0, MAX_DEGREES);
 
 #ifdef USE_SD
 static File logFile;
+static bool descent = false;
 #endif
 
 void setup() {
@@ -169,14 +170,16 @@ void loop() {
 #endif
 
 #ifdef USE_SD
-        // (time, altitude, velocity)
         if (logFile && elapsed_time > 5000) {
             double avg5sec = 0;
             for (int i = 0; i < (5000 / UPDATE_TIME); ++i) {
                 avg5sec += avgVel[i];
             }
             avg5sec /= (5000.0 / UPDATE_TIME);
-            if (avg5sec < ZERO_VEL_THRESH) {
+            if (avg5sec < -ZERO_VEL_THRESH) {
+                descent = true;
+            }
+            if (descent && elapsed_time > 20000 && avg5sec < ZERO_VEL_THRESH) {
                 logFile.close();
             }
         }
