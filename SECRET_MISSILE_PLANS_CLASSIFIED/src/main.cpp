@@ -9,8 +9,8 @@
 #define K 0.40222533776 // kg/m
 #define MASS (615.0 / 1000) // g to kg
 #define GRAVITY 9.81 // m/s^2
-#define OPEN_POS 40
-#define CLOSE_POS 90
+#define OPEN_POS 7
+#define CLOSE_POS 58
 #define MAX_DEGREES 145
 #define OPEN_TIME 1.0
 #define UPDATE_TIME 20
@@ -29,9 +29,9 @@ static Altimeter altimeter(SEA_LEVEL_PRESSURE);
 static Decoupler decoupler(0, MAX_DEGREES);
 
 //#define USE_SERIAL
-#define LAUNCH
-//#define DECOUPLER_TEST
-#define USE_SD
+//#define LAUNCH
+#define DECOUPLER_TEST
+//#define USE_SD
 
 #ifdef USE_SD
 static File logFile;
