@@ -38,6 +38,10 @@ static File logFile;
 static bool descent = false;
 #endif
 
+#ifdef LAUNCH
+#define PRE_LAUNCH_TIMEOUT 120
+#endif
+
 void setup() {
     // configure led & turn it off
     pinMode(LED_BUILTIN, OUTPUT);
@@ -63,10 +67,20 @@ void setup() {
     logFile = SD.open(filename, FILE_WRITE);
 #endif
 
+#ifdef LAUNCH
+    // pre-init timeout to allow for rocket assembly
+    for (int i = 0; i < PRE_LAUNCH_TIMEOUT; ++i) {
+        digitalWrite(LED_BUILTIN, HIGH);
+        delay(500);
+        digitalWrite(LED_BUILTIN, LOW);
+        delay(500);
+    }
+#endif
+
     // wait for altimeter to init
     while (!altimeter.init());
     // HACK: erratic readings for first few samples, we ignore first 1000ms here
-    for (int i = 0; i < 50; i++) {
+    for (int i = 0; i < 50; ++i) {
         altimeter.update();
     }
 
@@ -115,8 +129,8 @@ void loop() {
         if (logFile) {
             logFile.println(String(elapsed_time) + ", on fallback");
 
-            // stop logging after 2 minutes
-            if (elapsed_time > 120000) {
+            // stop logging after 3 minutes
+            if (elapsed_time > 180000) {
                 logFile.close();
             }
         }
