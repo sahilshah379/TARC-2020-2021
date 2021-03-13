@@ -9,8 +9,8 @@
 #define K 0.40222533776 // kg/m
 #define MASS (615.0 / 1000) // g to kg
 #define GRAVITY 9.81 // m/s^2
-#define OPEN_POS 7
-#define CLOSE_POS 58
+#define OPEN_POS 140
+#define CLOSE_POS 98
 #define MAX_DEGREES 145
 #define OPEN_TIME 1.0
 #define UPDATE_TIME 20
@@ -39,7 +39,7 @@ static bool descent = false;
 #endif
 
 #ifdef LAUNCH
-#define PRE_LAUNCH_TIMEOUT 120
+#define PRE_LAUNCH_TIMEOUT 120 //TODO: fix lmfao
 #endif
 
 void setup() {
@@ -175,6 +175,8 @@ void loop() {
                                                                 0.5 * GRAVITY * pow(OPEN_TIME, 2)) /
                                                                sqrt(MASS * GRAVITY / K)))) {
             decoupler.close();
+            delay(1000);
+
 #ifdef USE_SD
             if (logFile) {
                 logFile.println(String(elapsed_time) + ", " + "Decoupled");
