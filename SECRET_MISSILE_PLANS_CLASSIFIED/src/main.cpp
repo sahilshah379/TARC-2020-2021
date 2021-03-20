@@ -5,18 +5,18 @@
 
 #define DECOUPLER_PIN 10
 #define SEA_LEVEL_PRESSURE 1016
-#define FLIGHT_TIME 41
+#define FLIGHT_TIME 60 //fuck you TARC you don't control me
 #define K 0.40222533776 // kg/m
 #define MASS (615.0 / 1000) // g to kg
 #define GRAVITY 9.81 // m/s^2
 #define OPEN_POS 140
 #define CLOSE_POS 98
 #define MAX_DEGREES 145
-#define OPEN_TIME 1.0
+#define OPEN_TIME 1.5
 #define UPDATE_TIME 20
 
 #define ZERO_VEL_THRESH 2
-#define FALLBACK_RELEASE_TIME 13597L
+#define FALLBACK_RELEASE_TIME 11519L
 
 static unsigned long elapsed_time;
 static unsigned long start_time;
@@ -29,9 +29,9 @@ static Altimeter altimeter(SEA_LEVEL_PRESSURE);
 static Decoupler decoupler(0, MAX_DEGREES);
 
 //#define USE_SERIAL
-//#define LAUNCH
-#define DECOUPLER_TEST
-//#define USE_SD
+#define LAUNCH
+//#define DECOUPLER_TEST
+#define USE_SD
 
 #ifdef USE_SD
 static File logFile;
@@ -39,7 +39,7 @@ static bool descent = false;
 #endif
 
 #ifdef LAUNCH
-#define PRE_LAUNCH_TIMEOUT 120 //TODO: fix lmfao
+#define PRE_LAUNCH_TIMEOUT 300 //TODO: fix lmfao
 #endif
 
 void setup() {
@@ -68,6 +68,8 @@ void setup() {
 #endif
 
 #ifdef LAUNCH
+    decoupler.link(DECOUPLER_PIN, OPEN_POS, CLOSE_POS);
+    decoupler.open();
     // pre-init timeout to allow for rocket assembly
     for (int i = 0; i < PRE_LAUNCH_TIMEOUT; ++i) {
         digitalWrite(LED_BUILTIN, HIGH);
@@ -90,8 +92,6 @@ void setup() {
 #endif
 
 #ifdef LAUNCH
-    decoupler.link(DECOUPLER_PIN, OPEN_POS, CLOSE_POS);
-    decoupler.open();
     // wait for launch
     while (altimeter.velocity() < 10);
 #endif
@@ -121,6 +121,7 @@ void loop() {
             if (logFile) {
                 logFile.println(String(elapsed_time) + ", " + "Decoupled");
             }
+            delay(1000);
 #endif
         }
 #endif
@@ -186,18 +187,8 @@ void loop() {
 #endif
 
 #ifdef USE_SD
-        if (logFile && elapsed_time > 5000) {
-            double avg5sec = 0;
-            for (int i = 0; i < (5000 / UPDATE_TIME); ++i) {
-                avg5sec += avgVel[i];
-            }
-            avg5sec /= (5000.0 / UPDATE_TIME);
-            if (avg5sec < -ZERO_VEL_THRESH) {
-                descent = true;
-            }
-            if (descent && elapsed_time > 20000 && avg5sec < ZERO_VEL_THRESH) {
-                logFile.close();
-            }
+        if (elapsed_time > 180000) {
+            logFile.close();
         }
 #endif
     }
