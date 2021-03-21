@@ -4,19 +4,19 @@
 #include <SD.h>
 
 #define DECOUPLER_PIN 10
-#define SEA_LEVEL_PRESSURE 1016
+#define SEA_LEVEL_PRESSURE 1033
 #define FLIGHT_TIME 60 //fuck you TARC you don't control me
 #define K 0.40222533776 // kg/m
 #define MASS (615.0 / 1000) // g to kg
 #define GRAVITY 9.81 // m/s^2
-#define OPEN_POS 140
+#define OPEN_POS 143
 #define CLOSE_POS 98
 #define MAX_DEGREES 145
 #define OPEN_TIME 1.5
 #define UPDATE_TIME 20
 
 #define ZERO_VEL_THRESH 2
-#define FALLBACK_RELEASE_TIME 11519L
+#define FALLBACK_RELEASE_TIME 11859L
 
 static unsigned long elapsed_time;
 static unsigned long start_time;
