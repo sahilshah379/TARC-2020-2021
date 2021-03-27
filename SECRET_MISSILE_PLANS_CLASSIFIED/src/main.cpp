@@ -4,7 +4,7 @@
 #include <SD.h>
 
 #define DECOUPLER_PIN 10
-#define SEA_LEVEL_PRESSURE 1033
+#define SEA_LEVEL_PRESSURE 1019.5
 #define FLIGHT_TIME 60 //fuck you TARC you don't control me
 #define K 0.40222533776 // kg/m
 #define MASS (615.0 / 1000) // g to kg
@@ -28,7 +28,7 @@ static CircularBuffer<double, 5000 / UPDATE_TIME> avgVel{};
 static Altimeter altimeter(SEA_LEVEL_PRESSURE);
 static Decoupler decoupler(0, MAX_DEGREES);
 
-//#define USE_SERIAL
+// #define USE_SERIAL
 #define LAUNCH
 //#define DECOUPLER_TEST
 #define USE_SD
