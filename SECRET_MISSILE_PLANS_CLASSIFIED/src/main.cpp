@@ -4,7 +4,7 @@
 #include <SD.h>
 
 #define DECOUPLER_PIN 10
-#define SEA_LEVEL_PRESSURE 1015.5
+#define SEA_LEVEL_PRESSURE 1018
 #define FLIGHT_TIME 60.0 //fuck you TARC you don't control me
 #define K 0.40222533776 // kg/m
 #define MASS (615.0 / 1000) // g to kg
@@ -13,23 +13,26 @@
 #define CLOSE_POS 93.0
 #define MAX_DEGREES 145.0
 #define OPEN_TIME 1.5
-#define UPDATE_TIME 20.0
+#define UPDATE_TIME 20
 #define MAGIC_NUMBER 5.73
-#define PRE_LAUNCH_TIMEOUT 600 // seconds
+#define PRE_LAUNCH_TIMEOUT 300 // seconds
 #define ZERO_VEL_THRESH 2.0
 #define FALLBACK_RELEASE_TIME 11735L
 
 static unsigned long elapsed_time;
 static unsigned long start_time;
 static bool fallback = false;
-static bool decouple = false;
+
+static bool decouple_math = false;
+static bool decouple_fallback_altitude = false;
+static bool decouple_fallback_time = false;
 
 static CircularBuffer<double, int(5000 / UPDATE_TIME)> avgVel{};
 
 static Altimeter altimeter(SEA_LEVEL_PRESSURE);
 static Decoupler decoupler(0, MAX_DEGREES);
 
-static File logFile;
+//static File logFile;
 
 
 void setup() {
@@ -38,18 +41,18 @@ void setup() {
     digitalWrite(LED_BUILTIN, LOW);
 
 
-    if (!SD.begin(4)) {
-        // SD card could not be loaded
-        digitalWrite(LED_BUILTIN, HIGH);
-        for (;;);
-    }
+//    if (!SD.begin(4)) {
+//        // SD card could not be loaded
+//        digitalWrite(LED_BUILTIN, HIGH);
+//        for (;;);
+//    }
 
-    unsigned int log_ctr = 1;
-    static String filename = "log" + String(log_ctr) + ".csv";
-    while (SD.exists(filename)) {
-        filename = "log" + String(++log_ctr) + ".csv";
-    }
-    logFile = SD.open(filename, FILE_WRITE);
+//    unsigned int log_ctr = 1;
+//    static String filename = "log" + String(log_ctr) + ".csv";
+//    while (SD.exists(filename)) {
+//        filename = "log" + String(++log_ctr) + ".csv";
+//    }
+//    logFile = SD.open(filename, FILE_WRITE);
 
     decoupler.link(DECOUPLER_PIN, OPEN_POS, CLOSE_POS);
     decoupler.open();
@@ -69,79 +72,96 @@ void setup() {
     }
 
     // wait for launch
-    while (altimeter.velocity() < 10);
+    while (abs(altimeter.velocity()) < 5);
     start_time = millis();
 }
 
 void loop() {
     elapsed_time = millis() - start_time;
-
-    if (fallback || !altimeter.update()) {
-        // something has gone horribly wrong, switching to time-based fallback
-        fallback = true;
-        digitalWrite(LED_BUILTIN, HIGH);
-
-        // when we're a bit after the apogee
-        if (!decouple && elapsed_time >= FALLBACK_RELEASE_TIME) {
-            decoupler.close();
-            decouple = true;
-            if (logFile) {
-                logFile.println(String(elapsed_time) + ", Decoupled (FALLBACK - TIME)");
-            }
-        }
-
-        if (logFile) {
-            logFile.println(String(elapsed_time) + ", on fallback");
-            // stop logging after 3 minutes
-            if (elapsed_time > 180000) {
-                logFile.close();
-                exit(0);
-            }
+    if (decouple_math || decouple_fallback_time || decouple_fallback_altitude) {
+        if (decouple_math) {
+            digitalWrite(LED_BUILTIN, HIGH);
+            delay(3000);
+            digitalWrite(LED_BUILTIN, LOW);
+            delay(1000 - UPDATE_TIME);
+        } else if (decouple_fallback_time) {
+            digitalWrite(LED_BUILTIN, HIGH);
+            delay(5000);
+            digitalWrite(LED_BUILTIN, LOW);
+            delay(1000 - UPDATE_TIME);
+        } else if (decouple_fallback_altitude) {
+            digitalWrite(LED_BUILTIN, HIGH);
+            delay(7000);
+            digitalWrite(LED_BUILTIN, LOW);
+            delay(1000 - UPDATE_TIME);
         }
     } else {
-        avgVel.push_back(altimeter.velocity());
+        if (fallback || !altimeter.update()) {
+            // something has gone horribly wrong, switching to time-based fallback
+            fallback = true;
+            digitalWrite(LED_BUILTIN, HIGH);
 
-        if (elapsed_time > 1000) {
-            if (avgVel.avg(1000 / UPDATE_TIME) < ZERO_VEL_THRESH) {
-                if (logFile) {
-                    logFile.println(String(elapsed_time) + ", " + "Apogee Reached");
-                }
-            }
-
-            if (avgVel.avg(1000 / UPDATE_TIME) < 0 && altimeter.altitude() < 120 &&
-                !decouple) { // altitude fallback
-                digitalWrite(LED_BUILTIN, HIGH);
+            // when we're a bit after the apogee
+            if (elapsed_time >= FALLBACK_RELEASE_TIME) {
                 decoupler.close();
-                decouple = true;
-                if (logFile) {
-                    logFile.println(String(elapsed_time) + ", " + "Decoupled (FALLBACK - ALTITUDE)");
+                decouple_fallback_time = true;
+                //            if (logFile) {
+                //                logFile.println(String(elapsed_time) + ", Decoupled (FALLBACK - TIME)");
+                //            }
+            }
+
+            //        if (logFile) {
+            //            logFile.println(String(elapsed_time) + ", on fallback");
+            //            // stop logging after 3 minutes
+            //            if (elapsed_time > 180000) {
+            //                logFile.close();
+            //                exit(0);
+            //            }
+            //        }
+        } else {
+            avgVel.push_back(altimeter.velocity());
+
+            if (elapsed_time > 1000) {
+                //            if (avgVel.avg(1000 / UPDATE_TIME) < ZERO_VEL_THRESH) {
+                //                if (logFile) {
+                //                    logFile.println(String(elapsed_time) + ", " + "Apogee Reached");
+                //                }
+                //            }
+
+                if (avgVel.avg(1000 / UPDATE_TIME) < 0 && altimeter.altitude() < 120) { // altitude fallback
+                    decoupler.close();
+                    decouple_fallback_altitude = true;
+                    //                if (logFile) {
+                    //                    logFile.println(String(elapsed_time) + ", " + "Decoupled (FALLBACK - ALTITUDE)");
+                    //                }
+                }
+
+                if (avgVel.avg(1000 / UPDATE_TIME) < 0 &&
+                    elapsed_time <= (unsigned long) (1000 * (FLIGHT_TIME - OPEN_TIME -
+                                                             (altimeter.altitude() -
+                                                              altimeter.velocity() *
+                                                              OPEN_TIME -
+                                                              (MAGIC_NUMBER / 2.0) *
+                                                              pow(OPEN_TIME, 2)) /
+                                                             sqrt(MASS * GRAVITY /
+                                                                  K)))) {
+                    decoupler.close();
+                    decouple_math = true;
+                    //                if (logFile) {
+                    //                    logFile.println(String(elapsed_time) + ", " + "Decoupled");
+                    //                }
                 }
             }
 
-            if (!decouple && avgVel.avg(1000 / UPDATE_TIME) < 0 && elapsed_time <= (unsigned long) (1000 * (FLIGHT_TIME - OPEN_TIME -
-                                                                                               (altimeter.altitude() -
-                                                                                                altimeter.velocity() *
-                                                                                                OPEN_TIME -
-                                                                                                (MAGIC_NUMBER / 2.0) *
-                                                                                                pow(OPEN_TIME, 2)) /
-                                                                                               sqrt(MASS * GRAVITY /
-                                                                                                    K)))) {
-                decoupler.close();
-                decouple = true;
-                if (logFile) {
-                    logFile.println(String(elapsed_time) + ", " + "Decoupled");
-                }
-            }
-        }
+            //        if (logFile) {
+            //            logFile.println(
+            //                    String(elapsed_time) + ", " + String(altimeter.altitude()) + ", " + String(altimeter.velocity()));
+            //        }
 
-        if (logFile) {
-            logFile.println(
-                    String(elapsed_time) + ", " + String(altimeter.altitude()) + ", " + String(altimeter.velocity()));
-        }
-
-        if (elapsed_time > 180000) {
-            logFile.close();
-            exit(0);
+            //        if (elapsed_time > 180000) {
+            //            logFile.close();
+            //            exit(0);
+            //        }
         }
     }
     delay(UPDATE_TIME);
