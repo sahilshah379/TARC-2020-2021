@@ -72,7 +72,9 @@ void setup() {
     }
 
     // wait for launch
-    while (abs(altimeter.velocity()) < 5);
+    while (abs(altimeter.velocity()) < 5) {
+        altimeter.update();
+    }
     start_time = millis();
 }
 
